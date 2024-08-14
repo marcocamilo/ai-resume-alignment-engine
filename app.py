@@ -137,7 +137,7 @@ if evaluate:
     if description and resume:
         with st.spinner("Analyzing resume..."):
             strengths_weaknesses, missing_keywords, evaluation_response = (
-                evaluation_chain({"description": description, "resume": resume})
+                evaluation_chain({"description": description, "resume": resume}, return_only_outputs=True).values()
             )
             st.subheader("Strengths and Weaknesses")
             st.write(strengths_weaknesses)
@@ -152,7 +152,7 @@ if optimize:
     if description and resume:
         with st.spinner("Optimizing resume..."):
             strengths_weaknesses, missing_keywords, evaluation_response = (
-                evaluation_chain({"description": description, "resume": resume})
+                evaluation_chain({"description": description, "resume": resume}, return_only_outputs=True).values()
             )
             evaluation = f"Strengths and Weaknesses:\n{strengths_weaknesses}\n\nMissing Keywords:\n{missing_keywords}\n\nRecommendations:\n{evaluation_response}"
 
@@ -167,7 +167,7 @@ if optimize:
             )
 
             st.subheader("Optimized Resume")
-            st.write(optimized_resume)
+            st.text(optimized_resume)
             st.subheader("Summary of Changes")
             st.write(summary_result)
     else:
