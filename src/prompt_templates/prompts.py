@@ -16,13 +16,13 @@ For each item in the list, use the following format:
 - '[weakness]: one-sentence brief explanation.' 
     - Example: concrete example
 
-Do not include a header for this task in your answer.
+Return only the output, without a heading introducing it.
 """
 
 keys = """
 2. Missing Keywords
 
-List the keywords from the job description that are missing in the resume, specially skills, tools/frameworks, and behavioral adjectives. Provide only the keywords and phrases, without explanations. Use separate bullet points to breakdown list of keywords. Do not include a header for this task
+List the keywords from the job description that are missing in the resume, specially skills, tools/frameworks, and behavioral adjectives. Provide only the keywords and phrases, without explanations. Use separate bullet points to breakdown list of keywords. Return only the output, without a heading introducing it.
 """
 
 recommendations = """
@@ -35,7 +35,7 @@ Provide each recommendation in the following format:
 - '[actionable recommendation]: brief explanation.' 
     - Concrete example(s)
 
-Do not include a header for this task.
+Return only the output, without a heading introducing it.
 """
 
 optimization = """
@@ -45,7 +45,7 @@ You are an experienced Human Resources Manager, specializing in rewriting resume
 bullet_opt = """
 1. Bullet point optimization: 
 
-Based on the evaluation report, optimize each bullet point in the resume as necessary by writing impactful bullet points following these guidelines:
+Based on the evaluation report, you will focus only on the resume's project and experience sections and optimize each bullet point as necessary by writing impactful bullet points following these guidelines:
 
     • Strong Action Verbs: begin each bullet point with an action verb
     • Quantifiable metrics: use numbers or percentages in each bullet point to quantify achievements.
@@ -53,13 +53,13 @@ Based on the evaluation report, optimize each bullet point in the resume as nece
     • Impact Statements: include impact statements to showcase whether the candidate improved, optimized, or increased 'XYZ.'
     • Sprinkle soft skills: use more broad, simple statements, these are relative to collaboration, providing recommendations, and identifying solutions to potential problems.
 
-Enhance each bullet point further by sprinkling missing keywords and skills, to help with the ATS. Ensure these modifications reflect the evaluation's feedback effectively. Do not include a header for this task.
+Enhance each bullet point further by sprinkling missing keywords and skills, to help with the ATS. Modify only the project and experience sections. Ensure these modifications reflect the evaluation's feedback and stregnthen the alignment between the bullet points and the job description. Return the full resume with the enhanced bullet points in the projects and experience sections. Return only the output, without a heading introducing it.
 """
 
 key_opt = """
 2. Skills and keyword optimization:
 
-Based on evaluation report, integrate the missing keywords and skills into the skills section of the resume. Ensure the skills section remains concise and relevant to the job description. Do not include a header for this task.
+Based on evaluation report, integrate the missing keywords and skills into the skills section of the resume. Ensure the skills section remains concise and relevant to the job description. Return the full resume with the optimized skills section. Return only the output, without a heading introducing it.
 """
 
 output = """
@@ -72,8 +72,8 @@ Bare in mind the following limitations:
     • You cannot exceed the original length of the resume. This is because the original resume already fits in one page. You must be mindful of the volume of text, ensuring your version has a similar length to the original version.
     • Do not include an objective/professional summary. It is not used anymore.
 
-Return the optimized resume using the same format as provided in the input. Do not include a header for this task.
+Return the optimized resume using the same format as provided in the input. Return only the output, without a heading introducing it.
 """
 
-summary = """Return a summary of the changes made. Do not include a header for this task."""
+summary = """Return a summary of the changes made. Return only the output, without a heading introducing it."""
 

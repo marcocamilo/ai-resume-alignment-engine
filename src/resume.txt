@@ -1,0 +1,69 @@
+education:
+  - degree: Master of Arts in Slavic Languages
+    institution: Humboldt Universität zu Berlin
+    location: Berlin, Germany
+    dates: April 2021 — January 2024
+  - degree: Natural Language Processing Specialization
+    institution: DeepLearning.ai
+    location: "Remote"
+    dates: March 2023 — June 2023
+  - degree: Machine Learning Specialization
+    institution: Stanford University School of Engineering
+    location: "Remote"
+    dates: January 2023 – March 2023
+
+skills:
+  - type: Natural Language Processing
+    skills: LLMs, GenAI, GPT, BERT, Transformers, Prompt Engineering, Model Fine-tuning & Deployment 
+  - type: Libraries & Frameworks
+    skills: Ollama, LangChain, HuggingFace, PyTorch, TensorFlow, SpaCy, NLTK, Scikit-Learn, Pandas, NumPy
+  - type: Programming Languages
+    skills: Python, SQL, R, C++, Javascript
+  - type: Cloud Platforms & MLOps
+    skills: AWS SageMaker, Azure, Google Cloud Platform, Docker, Weights & Biases, Git, CI/CD for ML
+  - type: Languages
+    skills: English & Spanish (native); German & French (C2); Russian (C1); Italian & Portuguese (B2); Polish (B1)
+  - type: Soft Skills
+    skills: Solutions Engineer, Analytical Thinking, Effective Communication, Project Management, Collaborative Teamwork
+
+projects:
+  - project: GPT4-Powered Resume Alignment Engine
+    skills: LLMs, GPT4, Gemini, Streamlit, Prompt Engineering
+    dates: ""
+    description:
+      - text: Engineered over 10+ meta‐prompts and AI templates for GPT4, achieving a 40% increase resume alignment with job profile.
+      - text: Integrated a Python‐based Streamlit app into a resume optimization pipeline, streamlining Google Gemini API and GPT4, and reducing tailoring time by 50%.
+      - text: Tested and optimized GPT4 and Gemini pipeline to consistently attain an 80%+ resume matching score across 15+ job applications.
+  - project: BERT, Encoders, and Linear Models for Resume Text Classification
+    skills: PyTorch, SentBERT, Scikit-Learn, NLTK, Data Preprocessing, Model Deployment
+    dates: ""
+    description:
+      - text: Achieved 91.67% accuracy using BERT and transfer learning for text classification with 1000+ resumes.
+      - text: Engineered full-stack data pipelines (data preprocessing, model training, and algorithm optimization), resulting in a 30% reduction in processing time.
+      - text: Optimized Linear SVC performance with a 95% feature reduction using Truncated SVD, achieving 81% accuracy.
+
+  - project: "Sentiment-Optimized Stock Price Forecasting Using Modern RNNs"
+    skills: Tensorflow, Keras Tuner, HuggingFace, Scikit-Learn, XGBoost, Matplotlib, Seaborn, Model Optimization
+    dates: ""
+    description:
+      - text: Enhanced stock price forecasting to 98% accuracy using modern GRUs and leveraging advanced data engineering and model tuning techniques.
+      - text: Evaluated 15+ models, including XGBoost Regressor, LSTM, GRU, and Attention-CNN-LSTM models across 3 tech stocks, improving forecasting accuracy by up to 15%.
+      - text: Incorporated sentiment analysis from financial news data API, improving quality by 25% through robust data preprocessing and feature engineering.
+
+experience:
+  - company: "University of Sagrado Corazón"
+    position: "Lecturer in Foreign Languages and Linguistics"
+    location: "San Juan, Puerto Rico"
+    dates: "August 2019 - March 2021"
+    description:
+      - text: Applied regression analysis to evaluate performance metrics for 200+ students, improving test scores by 30%.
+      - text: Developed data-driven solutions that increased student success rates by 80% and proficiency levels by 70%.
+      - text: Partnered with faculty to integrate data-driven educational strategies that enhanced student engagement by 25%.
+  - company: "University of Puerto Rico"
+    position: "Russian Language Laboratory Assistant"
+    location: "San Juan, Puerto Rico"
+    dates: "August 2018 – May 2019"
+    description:
+      - text: Conducted exploratory data analysis on phonetic issues, uncovering 10 key trends in student pronunciation challenges.
+      - text: Analyzed data for 40+ students, delivering actionable insights to faculty and enhancing instructional quality.
+      - text: Presented 10 data-driven recommendations, developing targeted educational strategies for faculty challenges.
