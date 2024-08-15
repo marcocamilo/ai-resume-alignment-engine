@@ -11,9 +11,10 @@ from src.prompt_templates.prompts import (
     bullet_opt,
     key_opt,
     keys,
+    minus,
     optimization,
     output,
-    plus_minus,
+    plus,
     recommendations,
     role,
     summary,
@@ -33,9 +34,14 @@ model = ChatGoogleGenerativeAI(model=model_name)
 #  ────────────────────────────────────────────────────────────────────
 #   EVALUATION CHAINS
 #  ────────────────────────────────────────────────────────────────────
-strengths_weaknesses_template = PromptTemplate(
+strengths_template = PromptTemplate(
     input_variables=["description", "resume"],
-    template=f"{role}\n\n{plus_minus}\n\nJob Description:\n\n{{description}}\n\nResume:\n\n{{resume}}",
+    template=f"{role}\n\n{plus}\n\nJob Description:\n\n{{description}}\n\nResume:\n\n{{resume}}",
+)
+
+weaknesses_template = PromptTemplate(
+    input_variables=["description", "resume"],
+    template=f"{role}\n\n{minus}\n\nJob Description:\n\n{{description}}\n\nResume:\n\n{{resume}}",
 )
 
 missing_keywords_template = PromptTemplate(
@@ -44,15 +50,14 @@ missing_keywords_template = PromptTemplate(
 )
 
 evaluation_template = PromptTemplate(
-    input_variables=["strengths_weaknesses", "missing_keywords"],
-    template=f"{recommendations}\n\nStrengths and Weaknesses:\n\n{{strengths_weaknesses}}\n\nMissing Keywords:\n\n{{missing_keywords}}",
+    input_variables=["strengths", "weaknesses", "missing_keywords"],
+    template=f"{recommendations}\n\nStrengths and Weaknesses:\n\n{{strengths}}\n\n{{weaknesses}}\n\nMissing Keywords:\n\n{{missing_keywords}}",
 )
 
 evaluation_chains = {
-    "strengths_weaknesses": LLMChain(
-        llm=model,
-        prompt=strengths_weaknesses_template,
-        output_key="strengths_weaknesses",
+    "strengths": LLMChain(llm=model, prompt=strengths_template, output_key="strengths"),
+    "weaknesses": LLMChain(
+        llm=model, prompt=weaknesses_template, output_key="weaknesses"
     ),
     "missing_keywords": LLMChain(
         llm=model, prompt=missing_keywords_template, output_key="missing_keywords"
@@ -101,12 +106,13 @@ optimization_chains = {
 #  ────────────────────────────────────────────────────────────────────
 evaluation_chain = SequentialChain(
     chains=[
-        evaluation_chains["strengths_weaknesses"],
+        evaluation_chains["strengths"],
+        evaluation_chains["weaknesses"],
         evaluation_chains["missing_keywords"],
         evaluation_chains["recommendations"],
     ],
     input_variables=["resume", "description"],
-    output_variables=["strengths_weaknesses", "missing_keywords", "recommendations"],
+    output_variables=["strengths", "weaknesses", "missing_keywords", "recommendations"],
 )
 
 optimization_chain = SequentialChain(
@@ -136,11 +142,18 @@ with col2:
 if evaluate:
     if description and resume:
         with st.spinner("Analyzing resume..."):
-            strengths_weaknesses, missing_keywords, evaluation_response = (
-                evaluation_chain({"description": description, "resume": resume}, return_only_outputs=True).values()
+            strengths, weaknesses, missing_keywords, evaluation_response = (
+                evaluation_chain(
+                    {"description": description, "resume": resume},
+                    return_only_outputs=True,
+                ).values()
             )
             st.subheader("Strengths and Weaknesses")
-            st.write(strengths_weaknesses)
+            col_s, col_w = st.columns(2)
+            with col_s:
+                st.write(strengths)
+            with col_w:
+                st.write(weaknesses)
             st.subheader("Missing Keywords")
             st.write(missing_keywords)
             st.subheader("Actionable Recommendations")
@@ -151,10 +164,13 @@ if evaluate:
 if optimize:
     if description and resume:
         with st.spinner("Optimizing resume..."):
-            strengths_weaknesses, missing_keywords, evaluation_response = (
-                evaluation_chain({"description": description, "resume": resume}, return_only_outputs=True).values()
+            strengths, weaknesses, missing_keywords, evaluation_response = (
+                evaluation_chain(
+                    {"description": description, "resume": resume},
+                    return_only_outputs=True,
+                ).values()
             )
-            evaluation = f"Strengths and Weaknesses:\n{strengths_weaknesses}\n\nMissing Keywords:\n{missing_keywords}\n\nRecommendations:\n{evaluation_response}"
+            evaluation = f"Strengths and Weaknesses:\n{strengths}\n\n{weaknesses}\n\nMissing Keywords:\n{missing_keywords}\n\nRecommendations:\n{evaluation_response}"
 
             optimization_result = optimization_chain(
                 {"resume": resume, "description": description, "evaluation": evaluation}
