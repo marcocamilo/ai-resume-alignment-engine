@@ -36,22 +36,61 @@ model = ChatGoogleGenerativeAI(model=model_name)
 #  ────────────────────────────────────────────────────────────────────
 strengths_template = PromptTemplate(
     input_variables=["description", "resume"],
-    template=f"{role}\n\n{plus}\n\nJob Description:\n\n{{description}}\n\nResume:\n\n{{resume}}",
+    template=f"""
+    {role}
+
+    {plus}
+
+    Job Description:
+    {{description}}
+
+    Resume:
+    {{resume}}
+    """,
 )
 
 weaknesses_template = PromptTemplate(
     input_variables=["description", "resume"],
-    template=f"{role}\n\n{minus}\n\nJob Description:\n\n{{description}}\n\nResume:\n\n{{resume}}",
+    template=f"""
+    {role}
+
+    {minus}
+
+    Job Description:
+    {{description}}
+
+    Resume:
+    {{resume}}
+    """,
 )
 
 missing_keywords_template = PromptTemplate(
     input_variables=["description", "resume"],
-    template=f"{role}\n\n{keys}\n\nJob Description:\n\n{{description}}\n\nResume:\n\n{{resume}}",
+    template=f"""
+    {role}
+
+    {keys}
+
+    Job Description:
+    {{description}}
+
+    Resume:
+    {{resume}}
+    """,
 )
 
 evaluation_template = PromptTemplate(
     input_variables=["strengths", "weaknesses", "missing_keywords"],
-    template=f"{recommendations}\n\nStrengths and Weaknesses:\n\n{{strengths}}\n\n{{weaknesses}}\n\nMissing Keywords:\n\n{{missing_keywords}}",
+    template=f"""
+    {recommendations}
+
+    Strengths and Weaknesses:
+    {{strengths}}
+    {{weaknesses}}
+
+    Missing Keywords:
+    {{missing_keywords}}
+    """,
 )
 
 evaluation_chains = {
@@ -72,22 +111,61 @@ evaluation_chains = {
 #  ────────────────────────────────────────────────────────────────────
 bullet_opt_template = PromptTemplate(
     input_variables=["resume", "description", "evaluation"],
-    template=f"{optimization}\n\n{bullet_opt}\n\nResume:\n{{resume}}\n\nJob Description:\n\n{{description}}\n\nEvaluation Report:\n{{evaluation}}",
+    template=f"""
+    {optimization}
+
+    {bullet_opt}
+
+    Resume:
+    {{resume}}
+
+    Job Description:
+    {{description}}
+
+    Evaluation Report:
+    {{evaluation}}
+    """,
 )
 
 key_opt_template = PromptTemplate(
     input_variables=["bullet_optimized", "description", "evaluation"],
-    template=f"{optimization}\n\n{key_opt}\n\nResume:\n{{bullet_optimized}}\n\nJob Description:\n\n{{description}}\n\nEvaluation Report:\n{{evaluation}}",
+    template=f"""
+    {optimization}
+
+    {key_opt}
+
+    Resume:
+    {{bullet_optimized}}
+
+    Job Description:
+    {{description}}
+
+    Evaluation Report:
+    {{evaluation}}
+    """,
 )
 
 output_template = PromptTemplate(
     input_variables=["keyword_optimized"],
-    template=f"{output}\n\nOptimized Resume:\n\n{{keyword_optimized}}",
+    template=f"""
+    {output}
+
+    Optimized Resume:
+    {{keyword_optimized}}
+    """,
 )
 
 summary_template = PromptTemplate(
     input_variables=["resume", "optimized_resume"],
-    template=f"{summary}\n\nOriginal Resume:\n\n{{resume}}\n\nOptimized Resume:\n\n{{optimized_resume}}",
+    template=f"""
+    {summary}
+
+    Original Resume:
+    {{resume}}
+
+    Optimized Resume:
+    {{optimized_resume}}
+    """,
 )
 
 optimization_chains = {
@@ -164,13 +242,21 @@ if evaluate:
 if optimize:
     if description and resume:
         with st.spinner("Optimizing resume..."):
-            strengths, weaknesses, missing_keywords, evaluation_response = (
-                evaluation_chain(
-                    {"description": description, "resume": resume},
-                    return_only_outputs=True,
-                ).values()
-            )
-            evaluation = f"Strengths and Weaknesses:\n{strengths}\n\n{weaknesses}\n\nMissing Keywords:\n{missing_keywords}\n\nRecommendations:\n{evaluation_response}"
+            _, weaknesses, missing_keywords, evaluation_response = evaluation_chain(
+                {"description": description, "resume": resume},
+                return_only_outputs=True,
+            ).values()
+
+            evaluation = f"""
+            Weaknesses:
+            {weaknesses}
+
+            Missing Keywords:
+            {missing_keywords}
+
+            Recommendations:
+            {evaluation_response}
+            """
 
             optimization_result = optimization_chain(
                 {"resume": resume, "description": description, "evaluation": evaluation}

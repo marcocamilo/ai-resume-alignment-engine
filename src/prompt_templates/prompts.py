@@ -73,7 +73,7 @@ You are an experienced Human Resources Manager, specializing in rewriting resume
 bullet_opt = """
 1. Bullet point optimization: 
 
-Based on the evaluation report, you will focus only on the resume's project and experience sections and optimize each bullet point as necessary by writing impactful bullet points following these guidelines:
+Based on the evaluation report, you will focus only on the resume's project and experience sections and optimize each bullet point. For each bullet point, optimize the statements following these guidelines:
 
     • Strong Action Verbs: begin each bullet point with an action verb
     • Quantifiable metrics: use numbers or percentages in each bullet point to quantify achievements.
@@ -81,7 +81,9 @@ Based on the evaluation report, you will focus only on the resume's project and 
     • Impact Statements: include impact statements to showcase whether the candidate improved, optimized, or increased 'XYZ.'
     • Sprinkle soft skills: use more broad, simple statements, these are relative to collaboration, providing recommendations, and identifying solutions to potential problems.
 
-Enhance each bullet point further by sprinkling missing keywords and skills, to help with the ATS. Modify only the project and experience sections. Ensure these modifications reflect the evaluation's feedback and stregnthen the alignment between the bullet points and the job description. Return the full resume with the enhanced bullet points in the projects and experience sections. Return only the output, without a heading introducing it.
+Each bullet point must meet all five guidelines, but in particular, the use of strong action verbs and quantificable metrics. Enhance each bullet point further by working the missing keywords and skills mentioned in the evaluation into the bullet points, to help with the ATS.
+
+Modify only the project and experience sections. Ensure these modifications reflect the evaluation's feedback and stregnthen the alignment between the bullet points and the job description. Return the full resume with the enhanced bullet points in the projects and experience sections. Return only the output, without a heading introducing it.
 """
 
 key_opt = """
