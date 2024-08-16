@@ -26,7 +26,6 @@ Create a list of the resume's strengths linked to the job description. Under eac
 
 For each item in the list, use the following format: 
 
-**Strengths**
 - '[strength]: one-sentence brief explanation.' 
     - Example: concrete example
 
@@ -40,7 +39,6 @@ Create a list of the resume's areas of improvement linked to the job description
 
 For each item in the list, use the following format: 
 
-**Weaknesses**
 - '[weakness]: one-sentence brief explanation.' 
     - Example: concrete example
 

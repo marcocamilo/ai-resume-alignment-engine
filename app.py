@@ -37,18 +37,19 @@ llm = ChatGoogleGenerativeAI(model=model_name)
 #  ────────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="AI-Powered Resume Alignment Engine", layout="wide")
 st.header("AI-Powered Resume Alignment Engine")
-st.write(
-    "Please provide the target job description and your resume/CV to optimize it according to the job posting"
-)
 
-col1, col2 = st.columns(2)
-with col1:
-    description = st.text_area("Job Description:", height=200, key="desc")
-    evaluate = st.button("Evaluate My Resume")
-with col2:
-    resume = st.text_area("Resume:", height=200, key="resume")
-    optimize = st.button("Optimize My Resume")
+with st.sidebar:
+    st.header("Provide resume and job description")
+    st.write(
+        "Please provide the target job description and your resume/CV to optimize it according to the job posting"
+    )
 
+    description = st.text_area("Job Description:", height=100, key="desc")
+    resume = st.text_area("Resume:", height=100, key="resume")
+
+    st.markdown("---")
+    evaluate = st.button("🔎 Evaluate My Resume")
+    optimize = st.button("🚀 Optimize My Resume")
 
 #  ────────────────────────────────────────────────────────────────────
 #   EVALUATION CHAINS
@@ -119,7 +120,7 @@ summary_chain = create_chain(
 
 
 #  ────────────────────────────────────────────────────────────────────
-#   STREAMLIT APP
+#   HELPER FUNCTIONS
 #  ────────────────────────────────────────────────────────────────────
 def run_evaluation(description, resume):
     results = {
@@ -134,7 +135,9 @@ def run_evaluation(description, resume):
         recommendations,
     ]
 
-
+#  ────────────────────────────────────────────────────────────────────
+#   EVALUATION                                                         
+#  ────────────────────────────────────────────────────────────────────
 if evaluate:
     if description and resume:
         with st.spinner("Analyzing resume..."):
@@ -144,16 +147,25 @@ if evaluate:
             st.subheader("Strengths and Weaknesses")
             col_s, col_w = st.columns(2)
             with col_s:
-                st.write(strengths)
+                with st.expander("Strengths"):
+                    st.write(strengths)
             with col_w:
-                st.write(weaknesses)
+                with st.expander("Weaknesses"):
+                    st.write(weaknesses)
+
             st.subheader("Missing Keywords")
-            st.write(missing_keywords)
+            with st.expander("See details"):
+                st.write(missing_keywords)
+
             st.subheader("Actionable Recommendations")
-            st.write(recommendations)
+            with st.expander("See details"):
+                st.write(recommendations)
     else:
         st.warning("Please provide both resume and job description.")
 
+#  ────────────────────────────────────────────────────────────────────
+#   OPTIMIZATION                                                       
+#  ────────────────────────────────────────────────────────────────────
 if optimize:
     if description and resume:
         with st.spinner("Optimizing resume..."):
@@ -163,21 +175,23 @@ if optimize:
 
             evaluation = f"""Weaknesses:\n{weaknesses}\nMissing Keywords\n{missing_keywords}\nRecommendations:\n{recommendations}"""
 
-            optimization_result = optimization_chain.invoke(
+            optimized_resume = optimization_chain.invoke(
                 {"resume": resume, "description": description, "evaluation": evaluation}
-            )
+            )["optimized_resume"]
 
-            optimized_resume = optimization_result["optimized_resume"]
 
-            summary_result = summary_chain.invoke(
+            summary_of_changes = summary_chain.invoke(
                 {"resume": resume, "optimized_resume": optimized_resume}
-            )
-
-            summary_of_changes = summary_result["final_summary"]
+            )["final_summary"]
 
             st.subheader("Optimized Resume")
-            st.text(optimized_resume)
+            with st.expander("View Resume"):
+                st.write(optimized_resume)
+            with st.expander("Copy Resume"):
+                st.markdown(f"```{optimized_resume}```")
+
             st.subheader("Summary of Changes")
-            st.write(summary_result)
+            with st.expander("Summary of Changes"):
+                st.write(summary_of_changes)
     else:
         st.warning("Please provide both resume and job description.")
