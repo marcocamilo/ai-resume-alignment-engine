@@ -1,14 +1,19 @@
 import os
+from io import BytesIO
 
 import google.generativeai as genai
+import matplotlib.pyplot as plt
 import streamlit as st
 from dotenv import load_dotenv
 from langchain.schema.runnable import RunnableParallel, RunnablePassthrough
+from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from src.prompt_templates.prompts import (
+from src.modules.nlp import preprocessing
+from src.modules.utils import read_pdf, generate_wordcloud
+from src.templates.prompts import (
     bullet_opt,
     key_opt,
     keys,
@@ -19,9 +24,51 @@ from src.prompt_templates.prompts import (
     recommendations,
     role,
     summary,
+    EVALUATION_TEMPLATES,
+    OPTIMIZATION_TEMPLATES
 )
-
 load_dotenv()
+
+#  ────────────────────────────────────────────────────────────────────
+#   APP INPUT
+#  ────────────────────────────────────────────────────────────────────
+st.set_page_config(page_title="AI-Powered Resume Alignment Engine", layout="wide")
+st.header("AI-Powered Resume Alignment Engine")
+
+with st.sidebar:
+    st.header("Resume/CV and Job Posting")
+    st.write("Choose one input method for each:")
+
+    # Job Description Input
+    job_input_method = st.radio("Job Description Input Method:", ["URL", "Text"], horizontal=True)
+    if job_input_method == "URL":
+        job_url = st.text_input("Enter job posting URL")
+        if job_url:
+            job_loader = WebBaseLoader(job_url)
+            description = preprocessing(job_loader.load()[0].page_content, exist=True)
+    else:
+        description = st.text_area("Enter Job Description:", height=100)
+        description = preprocessing(description, exist=True)
+
+    # Resume Input
+    resume_input_method = st.radio("Resume Input Method:", ["PDF", "Text"], horizontal=True)
+    if resume_input_method == "PDF":
+        resume_file = st.file_uploader("Upload your Resume/CV (PDF)", type=["pdf"])
+        if resume_file:
+            pdf_contents = resume_file.read()
+            resume = read_pdf(BytesIO(pdf_contents))
+            resume = preprocessing(resume, exist=True)
+    else:
+        resume = st.text_area("Enter Resume Text:", height=100)
+        resume = preprocessing(resume, exist=True)
+
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    with col1:
+        evaluate = st.button("🔎 Evaluate")
+    with col2:
+        optimize = st.button("🚀 Optimize")
+
 
 #  ────────────────────────────────────────────────────────────────────
 #   INITIALIZE THE GEMINI API AND LLM
@@ -32,52 +79,28 @@ genai.configure(api_key=api_key)
 model_name = "gemini-1.5-flash"
 llm = ChatGoogleGenerativeAI(model=model_name)
 
-#  ────────────────────────────────────────────────────────────────────
-#   APP INPUT
-#  ────────────────────────────────────────────────────────────────────
-st.set_page_config(page_title="AI-Powered Resume Alignment Engine", layout="wide")
-st.header("AI-Powered Resume Alignment Engine")
-
-with st.sidebar:
-    st.header("Provide resume and job description")
-    st.write(
-        "Please provide the target job description and your resume/CV to optimize it according to the job posting"
-    )
-
-    description = st.text_area("Job Description:", height=100, key="desc")
-    resume = st.text_area("Resume:", height=100, key="resume")
-
-    st.markdown("---")
-    evaluate = st.button("🔎 Evaluate My Resume")
-    optimize = st.button("🚀 Optimize My Resume")
 
 #  ────────────────────────────────────────────────────────────────────
 #   EVALUATION CHAINS
 #  ────────────────────────────────────────────────────────────────────
-def create_chain(template, model=llm):
+def create__evaluation_chain(template, model=llm):
     input_variables = template.count("{")
     prompt_template = PromptTemplate(template=template, input_variables=input_variables)
     return prompt_template | model | StrOutputParser()
 
-
-evaluation_templates = {
-    "strengths": f"{role}\n{plus}\nJob Description:\n{{description}}\nResume:\n{{resume}}",
-    "weaknesses": f"{role}\n{minus}\nJob Description:\n{{description}}\nResume:\n{{resume}}",
-    "missing_keywords": f"{role}\n{keys}\nJob Description:\n{{description}}\nResume:\n{{resume}}",
-}
-
 evaluation_results = {
-    key: create_chain(template) for key, template in evaluation_templates.items()
+    key: create__evaluation_chain(template)
+    for key, template in EVALUATION_TEMPLATES.items()
 }
 
 recommendations_template = f"{recommendations}\nStrengths and Weaknesses:\n{{strengths}}\n{{weaknesses}}\nMissing Keywords:\n{{missing_keywords}}"
-recommendations_chain = create_chain(recommendations_template)
+recommendations_chain = create__evaluation_chain(recommendations_template)
 
 
 #  ────────────────────────────────────────────────────────────────────
 #   OPTIMIZATION TEMPLATES
 #  ────────────────────────────────────────────────────────────────────
-def create_chain(template, input_variables, output_key, model=llm):
+def create_optimization_chain(template, input_variables, output_key, model=llm):
     prompt = PromptTemplate(template=template, input_variables=input_variables)
     return RunnableParallel(
         {
@@ -91,37 +114,31 @@ def create_chain(template, input_variables, output_key, model=llm):
     )
 
 
-optimization_templates = {
-    "bullet_opt": f"{optimization}\n{bullet_opt}\nResume:\n{{resume}}\nJob Description:\n{{description}}\nEvaluation Report:\n{{evaluation}}",
-    "key_opt": f"{optimization}\n{key_opt}\nResume:\n{{bullet_optimized}}\nJob Description:\n{{description}}\nEvaluation Report:\n{{evaluation}}",
-    "output": f"{output}\nOptimized Resume:\n{{keyword_optimized}}",
-    "summary": f"{summary}\nOriginal Resume:\n{{resume}}\nOptimized Resume:\n{{optimized_resume}}",
-}
-
 optimization_chain = (
-    create_chain(
-        optimization_templates["bullet_opt"],
+    create_optimization_chain(
+        OPTIMIZATION_TEMPLATES["bullet_opt"],
         ["resume", "description", "evaluation"],
         "bullet_optimized",
     )
-    | create_chain(
-        optimization_templates["key_opt"],
+    | create_optimization_chain(
+        OPTIMIZATION_TEMPLATES["key_opt"],
         ["bullet_optimized", "description", "evaluation"],
         "keyword_optimized",
     )
-    | create_chain(
-        optimization_templates["output"], ["keyword_optimized"], "optimized_resume"
+    | create_optimization_chain(
+        OPTIMIZATION_TEMPLATES["output"], ["keyword_optimized"], "optimized_resume"
     )
 )
 
-summary_chain = create_chain(
-    optimization_templates["summary"], ["resume", "optimized_resume"], "final_summary"
+summary_chain = create_optimization_chain(
+    OPTIMIZATION_TEMPLATES["summary"], ["resume", "optimized_resume"], "final_summary"
 )
 
 
 #  ────────────────────────────────────────────────────────────────────
 #   HELPER FUNCTIONS
 #  ────────────────────────────────────────────────────────────────────
+@st.cache_data
 def run_evaluation(description, resume):
     results = {
         key: chain.invoke({"description": description, "resume": resume})
@@ -136,7 +153,7 @@ def run_evaluation(description, resume):
     ]
 
 #  ────────────────────────────────────────────────────────────────────
-#   EVALUATION                                                         
+#   EVALUATION
 #  ────────────────────────────────────────────────────────────────────
 if evaluate:
     if description and resume:
@@ -144,13 +161,33 @@ if evaluate:
             strengths, weaknesses, missing_keywords, recommendations = run_evaluation(
                 description, resume
             )
+
+            st.subheader("Word Clouds")
+            col_wc1, col_wc2 = st.columns(2)
+
+            with col_wc1:
+                st.write("Job Description")
+                wordcloud_desc = generate_wordcloud(description)
+                plt.figure(figsize=(10, 5))
+                plt.imshow(wordcloud_desc, interpolation="bilinear")
+                plt.axis("off")
+                st.pyplot(plt)
+
+            with col_wc2:
+                st.write("Resume")
+                wordcloud_resume = generate_wordcloud(resume)
+                plt.figure(figsize=(10, 5))
+                plt.imshow(wordcloud_resume, interpolation="bilinear")
+                plt.axis("off")
+                st.pyplot(plt)
+
             st.subheader("Strengths and Weaknesses")
             col_s, col_w = st.columns(2)
             with col_s:
-                with st.expander("Strengths"):
+                with st.expander("See details"):
                     st.write(strengths)
             with col_w:
-                with st.expander("Weaknesses"):
+                with st.expander("See details"):
                     st.write(weaknesses)
 
             st.subheader("Missing Keywords")
@@ -163,8 +200,9 @@ if evaluate:
     else:
         st.warning("Please provide both resume and job description.")
 
+
 #  ────────────────────────────────────────────────────────────────────
-#   OPTIMIZATION                                                       
+#   OPTIMIZATION
 #  ────────────────────────────────────────────────────────────────────
 if optimize:
     if description and resume:
@@ -179,19 +217,37 @@ if optimize:
                 {"resume": resume, "description": description, "evaluation": evaluation}
             )["optimized_resume"]
 
-
             summary_of_changes = summary_chain.invoke(
                 {"resume": resume, "optimized_resume": optimized_resume}
             )["final_summary"]
 
+            st.subheader("Word Clouds")
+            col_wc1, col_wc2 = st.columns(2)
+
+            with col_wc1:
+                st.write("Job Description")
+                wordcloud_desc = generate_wordcloud(description)
+                plt.figure(figsize=(10, 5))
+                plt.imshow(wordcloud_desc, interpolation="bilinear")
+                plt.axis("off")
+                st.pyplot(plt)
+
+            with col_wc2:
+                st.write("Optimized Resume")
+                wordcloud_resume = generate_wordcloud(optimized_resume)
+                plt.figure(figsize=(10, 5))
+                plt.imshow(wordcloud_resume, interpolation="bilinear")
+                plt.axis("off")
+                st.pyplot(plt)
+
             st.subheader("Optimized Resume")
-            with st.expander("View Resume"):
+            with st.expander("Preview"):
                 st.write(optimized_resume)
-            with st.expander("Copy Resume"):
+            with st.expander("Copy resume"):
                 st.markdown(f"```{optimized_resume}```")
 
             st.subheader("Summary of Changes")
-            with st.expander("Summary of Changes"):
+            with st.expander("See details"):
                 st.write(summary_of_changes)
     else:
         st.warning("Please provide both resume and job description.")

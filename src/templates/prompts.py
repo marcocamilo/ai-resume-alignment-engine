@@ -106,3 +106,15 @@ Return the optimized resume using the same format as provided in the input. Retu
 
 summary = """Return a summary of the changes made. Return only the output, without a heading introducing it."""
 
+EVALUATION_TEMPLATES = {
+    "strengths": f"{role}\n{plus}\nJob Description:\n{{description}}\nResume:\n{{resume}}",
+    "weaknesses": f"{role}\n{minus}\nJob Description:\n{{description}}\nResume:\n{{resume}}",
+    "missing_keywords": f"{role}\n{keys}\nJob Description:\n{{description}}\nResume:\n{{resume}}",
+}
+
+OPTIMIZATION_TEMPLATES = {
+    "bullet_opt": f"{optimization}\n{bullet_opt}\nResume:\n{{resume}}\nJob Description:\n{{description}}\nEvaluation Report:\n{{evaluation}}",
+    "key_opt": f"{optimization}\n{key_opt}\nResume:\n{{bullet_optimized}}\nJob Description:\n{{description}}\nEvaluation Report:\n{{evaluation}}",
+    "output": f"{output}\nOptimized Resume:\n{{keyword_optimized}}",
+    "summary": f"{summary}\nOriginal Resume:\n{{resume}}\nOptimized Resume:\n{{optimized_resume}}",
+}
