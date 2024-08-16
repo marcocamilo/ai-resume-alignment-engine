@@ -64,6 +64,8 @@ Provide each recommendation in the following format:
 Return only the output, without a heading introducing it.
 """
 
+recommendations_prompt = f"{recommendations}\nStrengths and Weaknesses:\n{{strengths}}\n{{weaknesses}}\nMissing Keywords:\n{{missing_keywords}}"
+
 optimization = """
 You are an experienced Human Resources Manager, specializing in rewriting resumes to optimize their alignment with job descriptions. Your task is to enhance the alignment between the provided resume and job description. To achieve this, you will modify the resume's content at different levels following the evaluation report provided below. Please complete the following tasks.
 """

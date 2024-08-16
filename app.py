@@ -14,16 +14,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from src.modules.nlp import preprocessing
 from src.modules.utils import read_pdf, generate_wordcloud
 from src.templates.prompts import (
-    bullet_opt,
-    key_opt,
-    keys,
-    minus,
-    optimization,
-    output,
-    plus,
-    recommendations,
-    role,
-    summary,
+    recommendations_prompt,
     EVALUATION_TEMPLATES,
     OPTIMIZATION_TEMPLATES
 )
@@ -35,7 +26,19 @@ load_dotenv()
 st.set_page_config(page_title="AI-Powered Resume Alignment Engine", layout="wide")
 st.header("AI-Powered Resume Alignment Engine")
 
+# st.markdown(
+#     """
+#     <style>
+#         section[data-testid="stSidebar"] {
+#             width: 350px !important; # Set the width to your desired value
+#         }
+#     </style>
+#     """,
+#     unsafe_allow_html=True,
+# )
+
 with st.sidebar:
+    # st.title("Developed by Marco Camilo")
     st.header("Resume/CV and Job Posting")
     st.write("Choose one input method for each:")
 
@@ -62,13 +65,37 @@ with st.sidebar:
         resume = st.text_area("Enter Resume Text:", height=100)
         resume = preprocessing(resume, exist=True)
 
-    st.markdown("---")
     col1, col2 = st.columns(2)
     with col1:
         evaluate = st.button("🔎 Evaluate")
     with col2:
         optimize = st.button("🚀 Optimize")
 
+    st.markdown("---")
+    # st.markdown(
+    #     "Developed by [Marco-Andrés Camilo-Pietri](https://www.linkedin.com/in/marcocamilo)<br>"
+    #     "[LinkedIn](https://www.linkedin.com/in/marcocamilo/) | [GitHub](https://github.com/marcocamilo) | [Website](https://marcocamilo.com)",
+    #     unsafe_allow_html=True
+    # )
+    st.markdown(
+        """
+        <div style="text-align: center;">
+            <p>Developed by 
+                <a href="https://www.linkedin.com/in/marcocamilo">Marco-Andrés Camilo-Pietri</a>
+            </p>
+            <a href="https://www.linkedin.com/in/marcocamilo" target="_blank">
+                <img src="https://img.shields.io/badge/LinkedIn-0077B5?&logo=linkedin" alt="LinkedIn" style="margin-right: 10px;">
+            </a>
+            <a href="https://github.com/your-github-username" target="_blank">
+                <img src="https://img.shields.io/badge/GitHub-100000?&logo=github" alt="GitHub" style="margin-right: 10px;">
+            </a>
+            <a href="https://marcocamilo.com" target="_blank">
+                <img src="https://img.shields.io/badge/Website-FF7139?&logo=Firefox-Browser&logoColor=white" alt="Website">
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 #  ────────────────────────────────────────────────────────────────────
 #   INITIALIZE THE GEMINI API AND LLM
@@ -93,8 +120,7 @@ evaluation_results = {
     for key, template in EVALUATION_TEMPLATES.items()
 }
 
-recommendations_template = f"{recommendations}\nStrengths and Weaknesses:\n{{strengths}}\n{{weaknesses}}\nMissing Keywords:\n{{missing_keywords}}"
-recommendations_chain = create__evaluation_chain(recommendations_template)
+recommendations_chain = create__evaluation_chain(recommendations_prompt)
 
 
 #  ────────────────────────────────────────────────────────────────────
@@ -155,6 +181,9 @@ def run_evaluation(description, resume):
 #  ────────────────────────────────────────────────────────────────────
 #   EVALUATION
 #  ────────────────────────────────────────────────────────────────────
+# if not evaluate or optimize:
+#     st.write("Hello")
+
 if evaluate:
     if description and resume:
         with st.spinner("Analyzing resume..."):
