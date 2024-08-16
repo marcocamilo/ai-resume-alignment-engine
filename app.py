@@ -3,8 +3,9 @@ import os
 import google.generativeai as genai
 import streamlit as st
 from dotenv import load_dotenv
-from langchain import LLMChain, PromptTemplate
-from langchain.chains import SequentialChain
+from langchain.schema.runnable import RunnableParallel, RunnablePassthrough
+from langchain_core.output_parsers.string import StrOutputParser
+from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.prompt_templates.prompts import (
@@ -29,185 +30,16 @@ api_key = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=api_key)
 
 model_name = "gemini-1.5-flash"
-model = ChatGoogleGenerativeAI(model=model_name)
+llm = ChatGoogleGenerativeAI(model=model_name)
 
 #  ────────────────────────────────────────────────────────────────────
-#   EVALUATION CHAINS
-#  ────────────────────────────────────────────────────────────────────
-strengths_template = PromptTemplate(
-    input_variables=["description", "resume"],
-    template=f"""
-    {role}
-
-    {plus}
-
-    Job Description:
-    {{description}}
-
-    Resume:
-    {{resume}}
-    """,
-)
-
-weaknesses_template = PromptTemplate(
-    input_variables=["description", "resume"],
-    template=f"""
-    {role}
-
-    {minus}
-
-    Job Description:
-    {{description}}
-
-    Resume:
-    {{resume}}
-    """,
-)
-
-missing_keywords_template = PromptTemplate(
-    input_variables=["description", "resume"],
-    template=f"""
-    {role}
-
-    {keys}
-
-    Job Description:
-    {{description}}
-
-    Resume:
-    {{resume}}
-    """,
-)
-
-evaluation_template = PromptTemplate(
-    input_variables=["strengths", "weaknesses", "missing_keywords"],
-    template=f"""
-    {recommendations}
-
-    Strengths and Weaknesses:
-    {{strengths}}
-    {{weaknesses}}
-
-    Missing Keywords:
-    {{missing_keywords}}
-    """,
-)
-
-evaluation_chains = {
-    "strengths": LLMChain(llm=model, prompt=strengths_template, output_key="strengths"),
-    "weaknesses": LLMChain(
-        llm=model, prompt=weaknesses_template, output_key="weaknesses"
-    ),
-    "missing_keywords": LLMChain(
-        llm=model, prompt=missing_keywords_template, output_key="missing_keywords"
-    ),
-    "recommendations": LLMChain(
-        llm=model, prompt=evaluation_template, output_key="recommendations"
-    ),
-}
-
-#  ────────────────────────────────────────────────────────────────────
-#   OPTIMIZATION TEMPLATES
-#  ────────────────────────────────────────────────────────────────────
-bullet_opt_template = PromptTemplate(
-    input_variables=["resume", "description", "evaluation"],
-    template=f"""
-    {optimization}
-
-    {bullet_opt}
-
-    Resume:
-    {{resume}}
-
-    Job Description:
-    {{description}}
-
-    Evaluation Report:
-    {{evaluation}}
-    """,
-)
-
-key_opt_template = PromptTemplate(
-    input_variables=["bullet_optimized", "description", "evaluation"],
-    template=f"""
-    {optimization}
-
-    {key_opt}
-
-    Resume:
-    {{bullet_optimized}}
-
-    Job Description:
-    {{description}}
-
-    Evaluation Report:
-    {{evaluation}}
-    """,
-)
-
-output_template = PromptTemplate(
-    input_variables=["keyword_optimized"],
-    template=f"""
-    {output}
-
-    Optimized Resume:
-    {{keyword_optimized}}
-    """,
-)
-
-summary_template = PromptTemplate(
-    input_variables=["resume", "optimized_resume"],
-    template=f"""
-    {summary}
-
-    Original Resume:
-    {{resume}}
-
-    Optimized Resume:
-    {{optimized_resume}}
-    """,
-)
-
-optimization_chains = {
-    "bullet_opt": LLMChain(
-        llm=model, prompt=bullet_opt_template, output_key="bullet_optimized"
-    ),
-    "key_opt": LLMChain(
-        llm=model, prompt=key_opt_template, output_key="keyword_optimized"
-    ),
-    "output": LLMChain(llm=model, prompt=output_template, output_key="final_resume"),
-    "summary": LLMChain(llm=model, prompt=summary_template, output_key="summary"),
-}
-
-#  ────────────────────────────────────────────────────────────────────
-#   SEQUENTIAL CHAIN
-#  ────────────────────────────────────────────────────────────────────
-evaluation_chain = SequentialChain(
-    chains=[
-        evaluation_chains["strengths"],
-        evaluation_chains["weaknesses"],
-        evaluation_chains["missing_keywords"],
-        evaluation_chains["recommendations"],
-    ],
-    input_variables=["resume", "description"],
-    output_variables=["strengths", "weaknesses", "missing_keywords", "recommendations"],
-)
-
-optimization_chain = SequentialChain(
-    chains=[
-        optimization_chains["bullet_opt"],
-        optimization_chains["key_opt"],
-        optimization_chains["output"],
-    ],
-    input_variables=["resume", "description", "evaluation"],
-    output_variables=["final_resume"],
-)
-
-#  ────────────────────────────────────────────────────────────────────
-#   STREAMLIT APP
+#   APP INPUT
 #  ────────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="AI-Powered Resume Alignment Engine", layout="wide")
 st.header("AI-Powered Resume Alignment Engine")
+st.write(
+    "Please provide the target job description and your resume/CV to optimize it according to the job posting"
+)
 
 col1, col2 = st.columns(2)
 with col1:
@@ -217,14 +49,97 @@ with col2:
     resume = st.text_area("Resume:", height=200, key="resume")
     optimize = st.button("Optimize My Resume")
 
+
+#  ────────────────────────────────────────────────────────────────────
+#   EVALUATION CHAINS
+#  ────────────────────────────────────────────────────────────────────
+def create_chain(template, model=llm):
+    input_variables = template.count("{")
+    prompt_template = PromptTemplate(template=template, input_variables=input_variables)
+    return prompt_template | model | StrOutputParser()
+
+
+evaluation_templates = {
+    "strengths": f"{role}\n{plus}\nJob Description:\n{{description}}\nResume:\n{{resume}}",
+    "weaknesses": f"{role}\n{minus}\nJob Description:\n{{description}}\nResume:\n{{resume}}",
+    "missing_keywords": f"{role}\n{keys}\nJob Description:\n{{description}}\nResume:\n{{resume}}",
+}
+
+evaluation_results = {
+    key: create_chain(template) for key, template in evaluation_templates.items()
+}
+
+recommendations_template = f"{recommendations}\nStrengths and Weaknesses:\n{{strengths}}\n{{weaknesses}}\nMissing Keywords:\n{{missing_keywords}}"
+recommendations_chain = create_chain(recommendations_template)
+
+
+#  ────────────────────────────────────────────────────────────────────
+#   OPTIMIZATION TEMPLATES
+#  ────────────────────────────────────────────────────────────────────
+def create_chain(template, input_variables, output_key, model=llm):
+    prompt = PromptTemplate(template=template, input_variables=input_variables)
+    return RunnableParallel(
+        {
+            output_key: prompt | model | StrOutputParser(),
+            **{
+                var: RunnablePassthrough()
+                for var in input_variables
+                if var != output_key
+            },
+        }
+    )
+
+
+optimization_templates = {
+    "bullet_opt": f"{optimization}\n{bullet_opt}\nResume:\n{{resume}}\nJob Description:\n{{description}}\nEvaluation Report:\n{{evaluation}}",
+    "key_opt": f"{optimization}\n{key_opt}\nResume:\n{{bullet_optimized}}\nJob Description:\n{{description}}\nEvaluation Report:\n{{evaluation}}",
+    "output": f"{output}\nOptimized Resume:\n{{keyword_optimized}}",
+    "summary": f"{summary}\nOriginal Resume:\n{{resume}}\nOptimized Resume:\n{{optimized_resume}}",
+}
+
+optimization_chain = (
+    create_chain(
+        optimization_templates["bullet_opt"],
+        ["resume", "description", "evaluation"],
+        "bullet_optimized",
+    )
+    | create_chain(
+        optimization_templates["key_opt"],
+        ["bullet_optimized", "description", "evaluation"],
+        "keyword_optimized",
+    )
+    | create_chain(
+        optimization_templates["output"], ["keyword_optimized"], "optimized_resume"
+    )
+)
+
+summary_chain = create_chain(
+    optimization_templates["summary"], ["resume", "optimized_resume"], "final_summary"
+)
+
+
+#  ────────────────────────────────────────────────────────────────────
+#   STREAMLIT APP
+#  ────────────────────────────────────────────────────────────────────
+def run_evaluation(description, resume):
+    results = {
+        key: chain.invoke({"description": description, "resume": resume})
+        for key, chain in evaluation_results.items()
+    }
+    recommendations = recommendations_chain.invoke(results)
+    return [
+        results["strengths"],
+        results["weaknesses"],
+        results["missing_keywords"],
+        recommendations,
+    ]
+
+
 if evaluate:
     if description and resume:
         with st.spinner("Analyzing resume..."):
-            strengths, weaknesses, missing_keywords, evaluation_response = (
-                evaluation_chain(
-                    {"description": description, "resume": resume},
-                    return_only_outputs=True,
-                ).values()
+            strengths, weaknesses, missing_keywords, recommendations = run_evaluation(
+                description, resume
             )
             st.subheader("Strengths and Weaknesses")
             col_s, col_w = st.columns(2)
@@ -235,38 +150,30 @@ if evaluate:
             st.subheader("Missing Keywords")
             st.write(missing_keywords)
             st.subheader("Actionable Recommendations")
-            st.write(evaluation_response)
+            st.write(recommendations)
     else:
         st.warning("Please provide both resume and job description.")
 
 if optimize:
     if description and resume:
         with st.spinner("Optimizing resume..."):
-            _, weaknesses, missing_keywords, evaluation_response = evaluation_chain(
-                {"description": description, "resume": resume},
-                return_only_outputs=True,
-            ).values()
+            _, weaknesses, missing_keywords, recommendations = run_evaluation(
+                description, resume
+            )
 
-            evaluation = f"""
-            Weaknesses:
-            {weaknesses}
+            evaluation = f"""Weaknesses:\n{weaknesses}\nMissing Keywords\n{missing_keywords}\nRecommendations:\n{recommendations}"""
 
-            Missing Keywords:
-            {missing_keywords}
-
-            Recommendations:
-            {evaluation_response}
-            """
-
-            optimization_result = optimization_chain(
+            optimization_result = optimization_chain.invoke(
                 {"resume": resume, "description": description, "evaluation": evaluation}
             )
 
-            optimized_resume = optimization_result["final_resume"]
+            optimized_resume = optimization_result["optimized_resume"]
 
-            summary_result = optimization_chains["summary"].run(
+            summary_result = summary_chain.invoke(
                 {"resume": resume, "optimized_resume": optimized_resume}
             )
+
+            summary_of_changes = summary_result["final_summary"]
 
             st.subheader("Optimized Resume")
             st.text(optimized_resume)

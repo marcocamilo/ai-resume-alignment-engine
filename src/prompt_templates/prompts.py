@@ -80,6 +80,7 @@ Based on the evaluation report, you will focus only on the resume's project and 
     • Domain Knowledge: put the specific hard skills and platform-based skills throughout my resume to show that the candidate fits qualifications states in the job description.
     • Impact Statements: include impact statements to showcase whether the candidate improved, optimized, or increased 'XYZ.'
     • Sprinkle soft skills: use more broad, simple statements, these are relative to collaboration, providing recommendations, and identifying solutions to potential problems.
+    • Bold Impact and Technical Skills: Highlight key results and relevant technical skills to ensure they stand out.
 
 Each bullet point must meet all five guidelines, but in particular, the use of strong action verbs and quantificable metrics. Enhance each bullet point further by working the missing keywords and skills mentioned in the evaluation into the bullet points, to help with the ATS.
 
