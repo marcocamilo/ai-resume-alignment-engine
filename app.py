@@ -12,12 +12,13 @@ from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.modules.nlp import preprocessing
-from src.modules.utils import read_pdf, generate_wordcloud
+from src.modules.utils import generate_wordcloud, read_pdf
 from src.templates.prompts import (
-    recommendations_prompt,
     EVALUATION_TEMPLATES,
-    OPTIMIZATION_TEMPLATES
+    OPTIMIZATION_TEMPLATES,
+    recommendations_prompt,
 )
+
 load_dotenv()
 
 #  ────────────────────────────────────────────────────────────────────
@@ -26,24 +27,14 @@ load_dotenv()
 st.set_page_config(page_title="AI-Powered Resume Alignment Engine", layout="wide")
 st.header("AI-Powered Resume Alignment Engine")
 
-# st.markdown(
-#     """
-#     <style>
-#         section[data-testid="stSidebar"] {
-#             width: 350px !important; # Set the width to your desired value
-#         }
-#     </style>
-#     """,
-#     unsafe_allow_html=True,
-# )
-
 with st.sidebar:
-    # st.title("Developed by Marco Camilo")
     st.header("Resume/CV and Job Posting")
     st.write("Choose one input method for each:")
 
     # Job Description Input
-    job_input_method = st.radio("Job Description Input Method:", ["URL", "Text"], horizontal=True)
+    job_input_method = st.radio(
+        "Job Description Input Method:", ["URL", "Text"], horizontal=True
+    )
     if job_input_method == "URL":
         job_url = st.text_input("Enter job posting URL")
         if job_url:
@@ -54,7 +45,9 @@ with st.sidebar:
         description = preprocessing(description, exist=True)
 
     # Resume Input
-    resume_input_method = st.radio("Resume Input Method:", ["PDF", "Text"], horizontal=True)
+    resume_input_method = st.radio(
+        "Resume Input Method:", ["PDF", "Text"], horizontal=True
+    )
     if resume_input_method == "PDF":
         resume_file = st.file_uploader("Upload your Resume/CV (PDF)", type=["pdf"])
         if resume_file:
@@ -72,11 +65,6 @@ with st.sidebar:
         optimize = st.button("🚀 Optimize")
 
     st.markdown("---")
-    # st.markdown(
-    #     "Developed by [Marco-Andrés Camilo-Pietri](https://www.linkedin.com/in/marcocamilo)<br>"
-    #     "[LinkedIn](https://www.linkedin.com/in/marcocamilo/) | [GitHub](https://github.com/marcocamilo) | [Website](https://marcocamilo.com)",
-    #     unsafe_allow_html=True
-    # )
     st.markdown(
         """
         <div style="text-align: center;">
@@ -94,7 +82,7 @@ with st.sidebar:
             </a>
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 #  ────────────────────────────────────────────────────────────────────
@@ -102,7 +90,6 @@ with st.sidebar:
 #  ────────────────────────────────────────────────────────────────────
 api_key = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=api_key)
-
 model_name = "gemini-1.5-flash"
 llm = ChatGoogleGenerativeAI(model=model_name)
 
@@ -114,6 +101,7 @@ def create__evaluation_chain(template, model=llm):
     input_variables = template.count("{")
     prompt_template = PromptTemplate(template=template, input_variables=input_variables)
     return prompt_template | model | StrOutputParser()
+
 
 evaluation_results = {
     key: create__evaluation_chain(template)
@@ -177,6 +165,7 @@ def run_evaluation(description, resume):
         results["missing_keywords"],
         recommendations,
     ]
+
 
 #  ────────────────────────────────────────────────────────────────────
 #   EVALUATION
