@@ -12,7 +12,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from src.modules.nlp import preprocessing
-from src.modules.utils import generate_wordcloud, read_pdf
+from src.modules.utils import generate_wordcloud, read_pdf, resume_stopwords
 from src.templates.prompts import (
     EVALUATION_TEMPLATES,
     OPTIMIZATION_TEMPLATES,
@@ -53,10 +53,10 @@ with st.sidebar:
         if resume_file:
             pdf_contents = resume_file.read()
             resume = read_pdf(BytesIO(pdf_contents))
-            resume = preprocessing(resume, exist=True)
+            resume = preprocessing(resume, exist=True, lst_stopwords=resume_stopwords)
     else:
         resume = st.text_area("Enter Resume Text:", height=100)
-        resume = preprocessing(resume, exist=True)
+        resume = preprocessing(resume, exist=True, lst_stopwords=resume_stopwords)
 
     col1, col2 = st.columns(2)
     with col1:
