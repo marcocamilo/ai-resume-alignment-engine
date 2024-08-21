@@ -1,6 +1,7 @@
 bs4==0.0.2
 contractions==0.1.73
 google-generativeai==0.7.2
+langchain-google-genai==1.0.8
 langchain-community==0.2.12
 langchain-core==0.2.32
 langchain==0.2.14

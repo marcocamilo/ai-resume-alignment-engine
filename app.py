@@ -29,8 +29,14 @@ st.header("AI-Powered Resume Alignment Engine")
 
 with st.sidebar:
     st.header("Resume/CV and Job Posting")
-    st.write("Choose one input method for each:")
 
+    # Google API Key Input
+    st.sidebar.header("Google API Key")
+    api_key = st.sidebar.text_input("Enter your Google API Key:", type="password")
+    if api_key:
+        genai.configure(api_key=api_key)
+
+    st.write("Choose one input method for each:")
     # Job Description Input
     job_input_method = st.radio(
         "Job Description Input Method:", ["URL", "Text"], horizontal=True
@@ -88,8 +94,8 @@ with st.sidebar:
 #  ────────────────────────────────────────────────────────────────────
 #   INITIALIZE THE GEMINI API AND LLM
 #  ────────────────────────────────────────────────────────────────────
-api_key = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=api_key)
+# api_key = os.getenv("GOOGLE_API_KEY")
+# genai.configure(api_key=api_key)
 model_name = "gemini-1.5-flash"
 llm = ChatGoogleGenerativeAI(model=model_name)
 
